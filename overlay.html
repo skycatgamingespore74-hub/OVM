@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Overlay Tournoi</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: transparent;
+  color: white;
+}
+.overlay {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.top {
+  text-align: center;
+  font-size: 40px;
+  font-weight: bold;
+}
+
+.middle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 50px;
+  margin-top: 20px;
+}
+
+.team {
+  width: 200px;
+  text-align: center;
+  margin: 0 50px;
+}
+
+.team-logo {
+  width: 100px;
+  height: 100px;
+  margin: auto;
+}
+
+.vs {
+  font-size: 60px;
+  margin: 0 30px;
+}
+
+.bottom {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+}
+
+.timer {
+  font-size: 50px;
+  margin-left: 50px;
+}
+
+/* Picks Brawlers */
+.picks {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pick {
+  width: 80px;
+  height: 80px;
+  margin: 0 10px;
+  position: relative;
+}
+
+.pick img {
+  width: 100%;
+  height: 100%;
+  display: none; /* caché au départ */
+}
+
+.lock {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 14px;
+  animation: blink 1.2s infinite;
+}
+
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.3; }
+}
+</style>
+</head>
+<body>
+
+<div class="overlay">
+  <!-- Nom du mode de jeu -->
+  <div class="top" id="gameMode">J’aime crabe</div>
+
+  <!-- Scores et équipes -->
+  <div class="middle">
+    <div class="team">
+      <img id="logoTeam1" class="team-logo" src="" alt="">
+      <div id="nameTeam1">Crazy Raccoon</div>
+      <div id="scoreTeam1">2</div>
+    </div>
+
+    <div class="vs">VS</div>
+
+    <div class="team">
+      <img id="logoTeam2" class="team-logo" src="" alt="">
+      <div id="nameTeam2">Elevate</div>
+      <div id="scoreTeam2">2</div>
+    </div>
+
+    <div class="timer" id="timer">SOON</div>
+  </div>
+
+  <!-- Picks Brawlers -->
+  <div class="picks">
+    <div class="pick">
+      <div class="lock">Brawler Picking</div>
+      <img id="pick1" src="">
+    </div>
+    <div class="pick">
+      <div class="lock">Brawler Picking</div>
+      <img id="pick2" src="">
+    </div>
+    <div class="pick">
+      <div class="lock">Brawler Picking</div>
+      <img id="pick3" src="">
+    </div>
+  </div>
+</div>
+
+<script>
+// Communication avec le localStorage pour Admin
+function updateOverlay() {
+  document.getElementById("nameTeam1").textContent = localStorage.getItem("nameTeam1") || "Crazy Raccoon";
+  document.getElementById("nameTeam2").textContent = localStorage.getItem("nameTeam2") || "Elevate";
+  document.getElementById("scoreTeam1").textContent = localStorage.getItem("scoreTeam1") || "2";
+  document.getElementById("scoreTeam2").textContent = localStorage.getItem("scoreTeam2") || "2";
+  document.getElementById("gameMode").textContent = localStorage.getItem("gameMode") || "J’aime crabe";
+  document.getElementById("logoTeam1").src = localStorage.getItem("logoTeam1") || "";
+  document.getElementById("logoTeam2").src = localStorage.getItem("logoTeam2") || "";
+
+  // Timer
+  let timerValue = parseInt(localStorage.getItem("timer")) || 0;
+  if (timerValue > 0) {
+    document.getElementById("timer").textContent = timerValue;
+  } else {
+    document.getElementById("timer").textContent = "SOON";
+  }
+
+  // Picks Brawlers
+  for (let i=1; i<=3; i++) {
+    let pickImg = localStorage.getItem("pick"+i);
+    let pickVisible = localStorage.getItem("pickVisible"+i) === "true";
+    if (pickImg && pickVisible) {
+      document.getElementById("pick"+i).src = pickImg;
+      document.querySelectorAll(".pick")[i-1].querySelector("img").style.display = "block";
+      document.querySelectorAll(".pick")[i-1].querySelector(".lock").style.display = "none";
+    } else {
+      document.querySelectorAll(".pick")[i-1].querySelector("img").style.display = "none";
+      document.querySelectorAll(".pick")[i-1].querySelector(".lock").style.display = "flex";
+    }
+  }
+}
+
+// Mise à jour toutes les 500ms
+setInterval(updateOverlay, 500);
+</script>
+
+</body>
+</html>
