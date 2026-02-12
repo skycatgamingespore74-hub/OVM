@@ -1,121 +1,120 @@
-// server.js - Version ultra debug pour Railway
+// server.js - Version Railway pur, pas de port fixe, overlay/admin + WebSocket
+
 const express = require('express');
 const path = require('path');
-const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http, { cors: { origin: "*" } });
+const http = require('http');
+const socketIo = require('socket.io');
 
-// Utiliser le port fourni par Railway
-const PORT = process.env.PORT || 3000;
+console.log('==============================');
+console.log('🚀 DÉMARRAGE DU SERVEUR');
+console.log('==============================');
+
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, { cors: { origin: '*' } });
 
 // ------------------------
-// Fonctions de log
+// Fonctions de logs
 // ------------------------
 function logHTTP(req) {
     console.log(`[HTTP] ${new Date().toISOString()} → ${req.method} ${req.url} de ${req.ip}`);
 }
-function logWS(msg, socketId="") {
-    console.log(`[WS] ${new Date().toISOString()} ${socketId ? "["+socketId+"]" : ""} → ${msg}`);
+
+function logWS(msg, socketId = '') {
+    console.log(`[WS] ${new Date().toISOString()} ${socketId ? '[' + socketId + ']' : ''} → ${msg}`);
 }
+
 function logError(err) {
     console.error(`[ERROR] ${new Date().toISOString()} →`, err);
 }
 
 // ------------------------
-// Middleware HTTP pour logs
+// Middleware HTTP
 // ------------------------
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
     logHTTP(req);
     next();
 });
 
 // ------------------------
-// Routes HTTP
+// Fichiers statiques
+// ------------------------
+app.use('/static', express.static(path.join(__dirname, 'public')));
+
+// ------------------------
+// Routes
 // ------------------------
 app.get('/', (req, res) => {
-    console.log("[ROUTE] / (racine) demandée");
-    res.send('<h1>Serveur Overlay en ligne ✅</h1>');
+    console.log('[ROUTE] / (racine) demandée');
+    res.json({
+        message: 'Serveur Overlay en ligne ✅',
+        time: new Date().toISOString(),
+        url: process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `Non détecté`
+    });
 });
 
 app.get('/overlay', (req, res) => {
-    console.log("[ROUTE] /overlay demandée");
-    const filePath = path.join(__dirname, 'public', 'overlay.html');
-    res.sendFile(filePath, (err) => {
+    console.log('[ROUTE] /overlay demandée');
+    res.sendFile(path.join(__dirname, 'public', 'overlay.html'), (err) => {
         if(err) logError(err);
     });
 });
 
 app.get('/admin', (req, res) => {
-    console.log("[ROUTE] /admin demandée");
-    const filePath = path.join(__dirname, 'public', 'admin.html');
-    res.sendFile(filePath, (err) => {
+    console.log('[ROUTE] /admin demandée');
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'), (err) => {
         if(err) logError(err);
     });
 });
 
-// Servir fichiers statiques pour CSS/JS/images
-app.use('/static', express.static(path.join(__dirname, 'public')));
-
 // ------------------------
-// Stockage temporaire overlay
+// Données de l’overlay
 // ------------------------
 let overlayData = {
-    nameTeam1: "Crazy Raccoon",
-    nameTeam2: "Elevate",
-    scoreTeam1: 2,
-    scoreTeam2: 2,
+    nameTeam1: "Équipe 1",
+    nameTeam2: "Équipe 2",
+    scoreTeam1: 0,
+    scoreTeam2: 0,
     logoTeam1: "",
     logoTeam2: "",
-    gameMode: "J’aime crabe",
+    gameMode: "Mode Jeu",
     timer: 0,
     pick1: "", pick2: "", pick3: "",
     pickVisible1: false, pickVisible2: false, pickVisible3: false
 };
 
 // ------------------------
-// Fonctions WebSocket
-// ------------------------
-function sendOverlayUpdate() {
-    try {
-        io.emit('updateOverlay', overlayData);
-        logWS("État overlay envoyé à tous les clients");
-    } catch(err) {
-        logError(err);
-    }
-}
-
-// ------------------------
 // WebSocket
 // ------------------------
 io.on('connection', (socket) => {
-    logWS("Nouveau client connecté", socket.id);
+    logWS("Client connecté", socket.id);
 
-    // Envoyer l’état actuel au nouveau client
+    // Envoyer l’état initial
     socket.emit('updateOverlay', overlayData);
     logWS("État initial envoyé au client", socket.id);
 
-    // Recevoir mise à jour de l’admin
+    // Recevoir update depuis admin
     socket.on('update', (data) => {
-        logWS("Mise à jour reçue du client", socket.id);
+        logWS("Update reçu du client", socket.id);
         console.log(data);
-
         try {
-            // Fusionner les nouvelles données
             overlayData = { ...overlayData, ...data };
-            sendOverlayUpdate();
-        } catch(err) {
+            io.emit('updateOverlay', overlayData);
+            logWS("Update diffusé à tous les clients");
+        } catch (err) {
             logError(err);
         }
     });
 
-    // Déconnexion
     socket.on('disconnect', () => {
         logWS("Client déconnecté", socket.id);
     });
 });
 
 // ------------------------
-// Gestion des erreurs serveur
+// Protection anti-crash
 // ------------------------
 process.on('uncaughtException', (err) => {
     logError("Exception non capturée : " + err);
@@ -125,13 +124,17 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // ------------------------
-// Démarrage du serveur
+// Lancement serveur (Railway fournit le port)
 // ------------------------
-http.listen(PORT, () => {
-    console.log(`\n🚀 Serveur lancé sur le port ${PORT}`);
-    console.log("📡 Routes disponibles :");
-    console.log(" - Racine : /");
-    console.log(" - Overlay : /overlay");
-    console.log(" - Admin : /admin");
-    console.log("💻 URL Railway : https://ton-projet-railway.up.railway.app");
+const PORT = process.env.PORT;
+if (!PORT) {
+    logError("❌ Aucun port détecté ! Le serveur doit être lancé sur Railway.");
+    process.exit(1);
+}
+
+server.listen(PORT, () => {
+    console.log('==============================');
+    console.log(`✅ SERVEUR LANCÉ SUR RAILWAY`);
+    console.log(`🌍 URL PUBLIQUE : ${process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : "Non détecté"}`);
+    console.log('==============================');
 });
