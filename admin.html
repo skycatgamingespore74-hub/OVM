@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Admin Overlay</title>
+<style>
+body { font-family: Arial; background: #222; color: white; padding: 20px; }
+h1 { text-align: center; }
+section { margin-bottom: 20px; }
+input, button { padding: 5px; margin: 5px 0; }
+</style>
+</head>
+<body>
+<h1>Admin Overlay</h1>
+
+<section>
+  <h2>Équipes et Scores</h2>
+  Nom équipe 1: <input type="text" id="nameTeam1"><br>
+  Logo équipe 1 (URL): <input type="text" id="logoTeam1"><br>
+  Score équipe 1: <input type="number" id="scoreTeam1"><br>
+
+  Nom équipe 2: <input type="text" id="nameTeam2"><br>
+  Logo équipe 2 (URL): <input type="text" id="logoTeam2"><br>
+  Score équipe 2: <input type="number" id="scoreTeam2"><br>
+  <button onclick="saveTeams()">Sauvegarder</button>
+</section>
+
+<section>
+  <h2>Mode de jeu</h2>
+  Nom mode: <input type="text" id="gameMode"><br>
+  <button onclick="saveMode()">Sauvegarder</button>
+</section>
+
+<section>
+  <h2>Timer</h2>
+  Temps (secondes): <input type="number" id="timer"><br>
+  <button onclick="saveTimer()">Lancer / Mettre à jour</button>
+</section>
+
+<section>
+  <h2>Picks Brawlers</h2>
+  <div>
+    Brawler 1 (URL image): <input type="text" id="pick1"><br>
+    <button onclick="showPick(1)">Afficher</button>
+  </div>
+  <div>
+    Brawler 2 (URL image): <input type="text" id="pick2"><br>
+    <button onclick="showPick(2)">Afficher</button>
+  </div>
+  <div>
+    Brawler 3 (URL image): <input type="text" id="pick3"><br>
+    <button onclick="showPick(3)">Afficher</button>
+  </div>
+</section>
+
+<script>
+function saveTeams() {
+  localStorage.setItem("nameTeam1", document.getElementById("nameTeam1").value);
+  localStorage.setItem("nameTeam2", document.getElementById("nameTeam2").value);
+  localStorage.setItem("scoreTeam1", document.getElementById("scoreTeam1").value);
+  localStorage.setItem("scoreTeam2", document.getElementById("scoreTeam2").value);
+  localStorage.setItem("logoTeam1", document.getElementById("logoTeam1").value);
+  localStorage.setItem("logoTeam2", document.getElementById("logoTeam2").value);
+}
+
+function saveMode() {
+  localStorage.setItem("gameMode", document.getElementById("gameMode").value);
+}
+
+function saveTimer() {
+  let t = parseInt(document.getElementById("timer").value) || 0;
+  localStorage.setItem("timer", t);
+
+  // Timer countdown
+  let interval = setInterval(() => {
+    t--;
+    if (t < 0) {
+      clearInterval(interval);
+      localStorage.setItem("timer", 0);
+    } else {
+      localStorage.setItem("timer", t);
+    }
+  }, 1000);
+}
+
+function showPick(num) {
+  localStorage.setItem("pick"+num, document.getElementById("pick"+num).value);
+  localStorage.setItem("pickVisible"+num, "true");
+}
+</script>
+
+</body>
+</html>
