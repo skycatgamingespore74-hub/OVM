@@ -2,78 +2,137 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Admin Overlay</title>
-<script src="/socket.io/socket.io.js"></script>
+<title>Overlay Tournoi</title>
 <style>
-body { font-family: Arial; background:#222; color:white; padding:20px; }
-h1{text-align:center;}
-section{margin-bottom:20px;}
-input,button{padding:5px; margin:5px 0;width:200px;}
-button{cursor:pointer;}
+body { margin:0; background:transparent; font-family: Arial, sans-serif; color:white;}
+.overlay-container {
+  position: relative;
+  width: 800px;
+  height: 250px;
+  margin: 50px auto;
+  background: rgba(0,0,0,0.5);
+  border-radius: 15px;
+  padding: 20px; 
+  box-sizing: border-box;
+}
+#gameMode { text-align:center; font-size:24px; font-weight:bold; margin-bottom:10px;}
+.score-block { display:flex; justify-content:center; align-items:center; font-size:28px;}
+.team { width:150px; text-align:center; margin:0 30px; }
+.team-logo { width:60px; height:60px; margin-bottom:5px; }
+.vs { font-size:36px; margin:0 20px; }
+#timer { position:absolute; top:20px; right:20px; font-size:32px; font-weight:bold; }
+.picks { display:flex; justify-content:center; margin-top:20px;}
+.pick { width:70px; height:70px; margin:0 10px; position:relative;}
+.pick img { width:100%; height:100%; display:none;}
+.lock { position:absolute; width:100%; height:100%; background:rgba(0,0,0,0.7);
+       display:flex; justify-content:center; align-items:center; font-size:12px; animation:blink 1.2s infinite;}
+@keyframes blink {0%,50%,100%{opacity:1;}25%,75%{opacity:0.3;}}
+#secretButton { 
+  position:absolute; top:0; left:0; width:50px; height:50px; 
+  cursor:pointer; z-index:9999; opacity:0; 
+}
 </style>
 </head>
 <body>
-<h1>Admin Overlay</h1>
 
-<section>
-<h2>Équipes et Scores</h2>
-Nom équipe 1: <input type="text" id="nameTeam1"><br>
-Logo équipe 1 (URL): <input type="text" id="logoTeam1"><br>
-Score équipe 1: <input type="number" id="scoreTeam1"><br>
-Nom équipe 2: <input type="text" id="nameTeam2"><br>
-Logo équipe 2 (URL): <input type="text" id="logoTeam2"><br>
-Score équipe 2: <input type="number" id="scoreTeam2"><br>
-<button onclick="sendUpdate()">Envoyer</button>
-</section>
+<div class="overlay-container">
+  <div id="gameMode">J’aime crabe</div>
 
-<section>
-<h2>Mode de jeu</h2>
-Nom mode: <input type="text" id="gameMode"><br>
-<button onclick="sendUpdate()">Envoyer</button>
-</section>
+  <div class="score-block">
+    <div class="team">
+      <img id="logoTeam1" class="team-logo" src="">
+      <div id="nameTeam1">Crazy Raccoon</div>
+      <div id="scoreTeam1">2</div>
+    </div>
 
-<section>
-<h2>Timer</h2>
-Temps (secondes): <input type="number" id="timer"><br>
-<button onclick="sendUpdate()">Envoyer</button>
-</section>
+    <div class="vs">VS</div>
 
-<section>
-<h2>Picks Brawlers</h2>
-<div>Brawler 1 URL: <input type="text" id="pick1"><button onclick="showPick(1)">Afficher</button></div>
-<div>Brawler 2 URL: <input type="text" id="pick2"><button onclick="showPick(2)">Afficher</button></div>
-<div>Brawler 3 URL: <input type="text" id="pick3"><button onclick="showPick(3)">Afficher</button></div>
-</section>
+    <div class="team">
+      <img id="logoTeam2" class="team-logo" src="">
+      <div id="nameTeam2">Elevate</div>
+      <div id="scoreTeam2">2</div>
+    </div>
+
+    <div id="timer">SOON</div>
+  </div>
+
+  <div class="picks">
+    <div class="pick">
+      <div class="lock">Brawler Picking</div>
+      <img id="pick1" src="">
+    </div>
+    <div class="pick">
+      <div class="lock">Brawler Picking</div>
+      <img id="pick2" src="">
+    </div>
+    <div class="pick">
+      <div class="lock">Brawler Picking</div>
+      <img id="pick3" src="">
+    </div>
+  </div>
+</div>
+
+<!-- Bouton secret pour charger les infos admin -->
+<div id="secretButton"></div>
 
 <script>
+// Fonction pour charger les infos admin depuis une URL JSON
+function loadAdminData() {
+  fetch("https://github.com/skycatgamingespore74-hub/OVM/data.json") // Remplace par ton URL admin
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("nameTeam1").textContent = data.nameTeam1;
+      document.getElementById("nameTeam2").textContent = data.nameTeam2;
+      document.getElementById("scoreTeam1").textContent = data.scoreTeam1;
+      document.getElementById("scoreTeam2").textContent = data.scoreTeam2;
+      document.getElementById("gameMode").textContent = data.gameMode;
+      document.getElementById("logoTeam1").src = data.logoTeam1;
+      document.getElementById("logoTeam2").src = data.logoTeam2;
+      document.getElementById("timer").textContent = data.timer > 0 ? data.timer : "SOON";
+
+      for(let i=1;i<=3;i++){
+        const pickDiv = document.querySelectorAll(".pick")[i-1];
+        if(data["pickVisible"+i]){
+          document.getElementById("pick"+i).src = data["pick"+i];
+          pickDiv.querySelector("img").style.display="block";
+          pickDiv.querySelector(".lock").style.display="none";
+        } else {
+          pickDiv.querySelector("img").style.display="none";
+          pickDiv.querySelector(".lock").style.display="flex";
+        }
+      }
+    })
+    .catch(err => console.error("Erreur chargement admin :", err));
+}
+
+// Événement clic sur le bouton secret
+document.getElementById("secretButton").addEventListener("click", loadAdminData);
+
+// Optionnel : Socket.IO si tu veux recevoir les updates en direct
+/*
 const socket = io();
-let data = {
-  nameTeam1:"Crazy Raccoon", nameTeam2:"Elevate",
-  scoreTeam1:2, scoreTeam2:2,
-  logoTeam1:"", logoTeam2:"",
-  gameMode:"J’aime crabe",
-  timer:0,
-  pick1:"", pick2:"", pick3:"",
-  pickVisible1:false, pickVisible2:false, pickVisible3:false
-};
-
-function sendUpdate(){
-  data.nameTeam1 = document.getElementById("nameTeam1").value;
-  data.nameTeam2 = document.getElementById("nameTeam2").value;
-  data.scoreTeam1 = parseInt(document.getElementById("scoreTeam1").value)||0;
-  data.scoreTeam2 = parseInt(document.getElementById("scoreTeam2").value)||0;
-  data.logoTeam1 = document.getElementById("logoTeam1").value;
-  data.logoTeam2 = document.getElementById("logoTeam2").value;
-  data.gameMode = document.getElementById("gameMode").value;
-  data.timer = parseInt(document.getElementById("timer").value)||0;
-  socket.emit('update', data);
-}
-
-function showPick(num){
-  data["pick"+num] = document.getElementById("pick"+num).value;
-  data["pickVisible"+num] = true;
-  socket.emit('update', data);
-}
+socket.on('updateOverlay', (data) => {
+  document.getElementById("nameTeam1").textContent = data.nameTeam1;
+  document.getElementById("nameTeam2").textContent = data.nameTeam2;
+  document.getElementById("scoreTeam1").textContent = data.scoreTeam1;
+  document.getElementById("scoreTeam2").textContent = data.scoreTeam2;
+  document.getElementById("gameMode").textContent = data.gameMode;
+  document.getElementById("logoTeam1").src = data.logoTeam1;
+  document.getElementById("logoTeam2").src = data.logoTeam2;
+  document.getElementById("timer").textContent = data.timer > 0 ? data.timer : "SOON";
+  for(let i=1;i<=3;i++){
+    const pickDiv = document.querySelectorAll(".pick")[i-1];
+    if(data["pickVisible"+i]){
+      document.getElementById("pick"+i).src = data["pick"+i];
+      pickDiv.querySelector("img").style.display="block";
+      pickDiv.querySelector(".lock").style.display="none";
+    } else {
+      pickDiv.querySelector("img").style.display="none";
+      pickDiv.querySelector(".lock").style.display="flex";
+    }
+  }
+});
+*/
 </script>
 
 </body>
