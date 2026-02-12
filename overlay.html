@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Overlay Tournoi</title>
-<script src="/socket.io/socket.io.js"></script>
 <style>
 body { margin:0; background:transparent; font-family: Arial, sans-serif; color:white;}
 .overlay-container {
@@ -28,6 +27,10 @@ body { margin:0; background:transparent; font-family: Arial, sans-serif; color:w
 .lock { position:absolute; width:100%; height:100%; background:rgba(0,0,0,0.7);
        display:flex; justify-content:center; align-items:center; font-size:12px; animation:blink 1.2s infinite;}
 @keyframes blink {0%,50%,100%{opacity:1;}25%,75%{opacity:0.3;}}
+#secretButton { 
+  position:absolute; top:0; left:0; width:50px; height:50px; 
+  cursor:pointer; z-index:9999; opacity:0; 
+}
 </style>
 </head>
 <body>
@@ -69,10 +72,45 @@ body { margin:0; background:transparent; font-family: Arial, sans-serif; color:w
   </div>
 </div>
 
-<script>
-const socket = io();
+<!-- Bouton secret pour charger les infos admin -->
+<div id="secretButton"></div>
 
-// Quand le serveur envoie une mise à jour
+<script>
+// Fonction pour charger les infos admin depuis une URL JSON
+function loadAdminData() {
+  fetch("https://ton-url-admin.com/data.json") // Remplace par ton URL admin
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("nameTeam1").textContent = data.nameTeam1;
+      document.getElementById("nameTeam2").textContent = data.nameTeam2;
+      document.getElementById("scoreTeam1").textContent = data.scoreTeam1;
+      document.getElementById("scoreTeam2").textContent = data.scoreTeam2;
+      document.getElementById("gameMode").textContent = data.gameMode;
+      document.getElementById("logoTeam1").src = data.logoTeam1;
+      document.getElementById("logoTeam2").src = data.logoTeam2;
+      document.getElementById("timer").textContent = data.timer > 0 ? data.timer : "SOON";
+
+      for(let i=1;i<=3;i++){
+        const pickDiv = document.querySelectorAll(".pick")[i-1];
+        if(data["pickVisible"+i]){
+          document.getElementById("pick"+i).src = data["pick"+i];
+          pickDiv.querySelector("img").style.display="block";
+          pickDiv.querySelector(".lock").style.display="none";
+        } else {
+          pickDiv.querySelector("img").style.display="none";
+          pickDiv.querySelector(".lock").style.display="flex";
+        }
+      }
+    })
+    .catch(err => console.error("Erreur chargement admin :", err));
+}
+
+// Événement clic sur le bouton secret
+document.getElementById("secretButton").addEventListener("click", loadAdminData);
+
+// Optionnel : Socket.IO si tu veux recevoir les updates en direct
+/*
+const socket = io();
 socket.on('updateOverlay', (data) => {
   document.getElementById("nameTeam1").textContent = data.nameTeam1;
   document.getElementById("nameTeam2").textContent = data.nameTeam2;
@@ -81,11 +119,7 @@ socket.on('updateOverlay', (data) => {
   document.getElementById("gameMode").textContent = data.gameMode;
   document.getElementById("logoTeam1").src = data.logoTeam1;
   document.getElementById("logoTeam2").src = data.logoTeam2;
-
-  // Timer
   document.getElementById("timer").textContent = data.timer > 0 ? data.timer : "SOON";
-
-  // Picks Brawlers
   for(let i=1;i<=3;i++){
     const pickDiv = document.querySelectorAll(".pick")[i-1];
     if(data["pickVisible"+i]){
@@ -98,6 +132,7 @@ socket.on('updateOverlay', (data) => {
     }
   }
 });
+*/
 </script>
 
 </body>
