@@ -2,125 +2,52 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Overlay Championnat</title>
+<title>Overlay Tournoi</title>
+<script src="/socket.io/socket.io.js"></script>
 <style>
-body {
-  margin: 0;
-  background: transparent;
-  font-family: Arial, sans-serif;
-}
-
-/* Overlay container avec taille fixe */
+body { margin:0; background:transparent; font-family: Arial, sans-serif; color:white;}
 .overlay-container {
   position: relative;
-  width: 800px; /* largeur exacte du bloc */
-  height: 250px; /* hauteur exacte du bloc */
-  margin: 50px auto; /* centré sur l'écran */
+  width: 800px;
+  height: 250px;
+  margin: 50px auto;
   background: rgba(0,0,0,0.5);
   border-radius: 15px;
-  padding: 20px;
+  padding: 20px; 
   box-sizing: border-box;
-  color: white;
 }
-
-/* Mode de jeu */
-#gameMode {
-  text-align: center;
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-/* Scores et équipes */
-.score-block {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 28px;
-}
-
-.team {
-  width: 150px;
-  text-align: center;
-  margin: 0 30px;
-}
-
-.team-logo {
-  width: 60px;
-  height: 60px;
-  margin-bottom: 5px;
-}
-
-.vs {
-  font-size: 36px;
-  margin: 0 20px;
-}
-
-/* Timer SOON */
-#timer {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  font-size: 32px;
-  font-weight: bold;
-}
-
-/* Picks Brawlers */
-.picks {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.pick {
-  width: 70px;
-  height: 70px;
-  margin: 0 10px;
-  position: relative;
-}
-
-.pick img {
-  width: 100%;
-  height: 100%;
-  display: none; /* caché au départ */
-}
-
-.lock {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 12px;
-  animation: blink 1.2s infinite;
-}
-
-@keyframes blink {
-  0%,50%,100% { opacity: 1; }
-  25%,75% { opacity: 0.3; }
-}
+#gameMode { text-align:center; font-size:24px; font-weight:bold; margin-bottom:10px;}
+.score-block { display:flex; justify-content:center; align-items:center; font-size:28px;}
+.team { width:150px; text-align:center; margin:0 30px; }
+.team-logo { width:60px; height:60px; margin-bottom:5px; }
+.vs { font-size:36px; margin:0 20px; }
+#timer { position:absolute; top:20px; right:20px; font-size:32px; font-weight:bold; }
+.picks { display:flex; justify-content:center; margin-top:20px;}
+.pick { width:70px; height:70px; margin:0 10px; position:relative;}
+.pick img { width:100%; height:100%; display:none;}
+.lock { position:absolute; width:100%; height:100%; background:rgba(0,0,0,0.7);
+       display:flex; justify-content:center; align-items:center; font-size:12px; animation:blink 1.2s infinite;}
+@keyframes blink {0%,50%,100%{opacity:1;}25%,75%{opacity:0.3;}}
 </style>
 </head>
 <body>
 
 <div class="overlay-container">
-  <div id="gameMode">aucun mode selectioner</div>
+  <div id="gameMode">J’aime crabe</div>
 
   <div class="score-block">
     <div class="team">
       <img id="logoTeam1" class="team-logo" src="">
-      <div id="nameTeam1">team 1 non config</div>
-      <div id="scoreTeam1">non config</div>
+      <div id="nameTeam1">Crazy Raccoon</div>
+      <div id="scoreTeam1">2</div>
     </div>
 
     <div class="vs">VS</div>
 
     <div class="team">
       <img id="logoTeam2" class="team-logo" src="">
-      <div id="nameTeam2">team 2 non config</div>
-      <div id="scoreTeam2">non config</div>
+      <div id="nameTeam2">Elevate</div>
+      <div id="scoreTeam2">2</div>
     </div>
 
     <div id="timer">SOON</div>
@@ -143,37 +70,35 @@ body {
 </div>
 
 <script>
-// Fonction pour mettre à jour depuis l'admin
-function updateOverlay() {
-  document.getElementById("nameTeam1").textContent = localStorage.getItem("nameTeam1") || "team 1 non config";
-  document.getElementById("nameTeam2").textContent = localStorage.getItem("nameTeam2") || "team 2 non config";
-  document.getElementById("scoreTeam1").textContent = localStorage.getItem("scoreTeam1") || "non config";
-  document.getElementById("scoreTeam2").textContent = localStorage.getItem("scoreTeam2") || "non config";
-  document.getElementById("gameMode").textContent = localStorage.getItem("gameMode") || "aucun mode selectioner";
-  document.getElementById("logoTeam1").src = localStorage.getItem("logoTeam1") || "";
-  document.getElementById("logoTeam2").src = localStorage.getItem("logoTeam2") || "";
+const socket = io();
+
+// Quand le serveur envoie une mise à jour
+socket.on('updateOverlay', (data) => {
+  document.getElementById("nameTeam1").textContent = data.nameTeam1;
+  document.getElementById("nameTeam2").textContent = data.nameTeam2;
+  document.getElementById("scoreTeam1").textContent = data.scoreTeam1;
+  document.getElementById("scoreTeam2").textContent = data.scoreTeam2;
+  document.getElementById("gameMode").textContent = data.gameMode;
+  document.getElementById("logoTeam1").src = data.logoTeam1;
+  document.getElementById("logoTeam2").src = data.logoTeam2;
 
   // Timer
-  let t = parseInt(localStorage.getItem("timer")) || 0;
-  document.getElementById("timer").textContent = t > 0 ? t : "SOON";
+  document.getElementById("timer").textContent = data.timer > 0 ? data.timer : "SOON";
 
   // Picks Brawlers
   for(let i=1;i<=3;i++){
-    let pickImg = localStorage.getItem("pick"+i);
-    let pickVisible = localStorage.getItem("pickVisible"+i) === "true";
-    let pickDiv = document.querySelectorAll(".pick")[i-1];
-    if(pickImg && pickVisible){
-      document.getElementById("pick"+i).src = pickImg;
-      pickDiv.querySelector("img").style.display = "block";
-      pickDiv.querySelector(".lock").style.display = "none";
+    const pickDiv = document.querySelectorAll(".pick")[i-1];
+    if(data["pickVisible"+i]){
+      document.getElementById("pick"+i).src = data["pick"+i];
+      pickDiv.querySelector("img").style.display="block";
+      pickDiv.querySelector(".lock").style.display="none";
     } else {
-      pickDiv.querySelector("img").style.display = "none";
-      pickDiv.querySelector(".lock").style.display = "flex";
+      pickDiv.querySelector("img").style.display="none";
+      pickDiv.querySelector(".lock").style.display="flex";
     }
   }
-}
-
-setInterval(updateOverlay, 300);
+});
 </script>
+
 </body>
 </html>
