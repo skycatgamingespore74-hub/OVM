@@ -112,7 +112,7 @@ body {
     <div class="team">
       <img id="logoTeam1" class="team-logo" src="">
       <div id="nameTeam1">team 1 non config</div>
-      <div id="scoreTeam1">2</div>
+      <div id="scoreTeam1">non config</div>
     </div>
 
     <div class="vs">VS</div>
@@ -120,7 +120,7 @@ body {
     <div class="team">
       <img id="logoTeam2" class="team-logo" src="">
       <div id="nameTeam2">team 2 non config</div>
-      <div id="scoreTeam2">2</div>
+      <div id="scoreTeam2">non config</div>
     </div>
 
     <div id="timer">SOON</div>
@@ -145,11 +145,11 @@ body {
 <script>
 // Fonction pour mettre à jour depuis l'admin
 function updateOverlay() {
-  document.getElementById("nameTeam1").textContent = localStorage.getItem("nameTeam1") || "Crazy Raccoon";
-  document.getElementById("nameTeam2").textContent = localStorage.getItem("nameTeam2") || "Elevate";
-  document.getElementById("scoreTeam1").textContent = localStorage.getItem("scoreTeam1") || "2";
-  document.getElementById("scoreTeam2").textContent = localStorage.getItem("scoreTeam2") || "2";
-  document.getElementById("gameMode").textContent = localStorage.getItem("gameMode") || "J’aime crabe";
+  document.getElementById("nameTeam1").textContent = localStorage.getItem("nameTeam1") || "team 1 non config";
+  document.getElementById("nameTeam2").textContent = localStorage.getItem("nameTeam2") || "team 2 non config";
+  document.getElementById("scoreTeam1").textContent = localStorage.getItem("scoreTeam1") || "non config";
+  document.getElementById("scoreTeam2").textContent = localStorage.getItem("scoreTeam2") || "non config";
+  document.getElementById("gameMode").textContent = localStorage.getItem("gameMode") || "aucun mode selectioner";
   document.getElementById("logoTeam1").src = localStorage.getItem("logoTeam1") || "";
   document.getElementById("logoTeam2").src = localStorage.getItem("logoTeam2") || "";
 
